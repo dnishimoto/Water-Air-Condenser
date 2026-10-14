@@ -1,4 +1,38 @@
+/*
+ # Water-Air Condenser: Complete Operational Pipeline
 
+ The Water-Air Condenser system operates as an integrated energy-generation, atmospheric-water-production, storage, and distribution system. Its pipeline begins with environmental measurements and solar energy generation, proceeds through power management, air intake, cooling, condensation, water treatment, and storage, and concludes with consumer dispensing, revenue accounting, and feedback control. The cellular automaton (CA) coordinates these processes by evaluating system conditions, updating component states, enforcing operating constraints, and determining which actions should occur during each simulation step.
+
+ 1\. Environmental monitoring and atmospheric moisture assessment. The process begins by measuring or estimating ambient temperature, relative humidity, atmospheric pressure, solar irradiance, and available airflow. These environmental conditions determine how much water vapor is present in the atmosphere and how much energy may be available to operate the system. The CA calculates the dew point, which indicates the temperature at which air becomes saturated under the modeled conditions. The mass of water vapor entering the condenser is determined by multiplying the dry-air mass flow rate by the incoming humidity ratio. The system uses this calculation to estimate the maximum recoverable water before considering equipment limitations. If the air contains little moisture, the CA must reduce its expected production rather than assume that the condenser will generate water at a constant rate.
+
+ 2\. Solar power generation. Solar panels convert incoming sunlight into electrical power. The CA calculates available solar power using solar irradiance, panel area, panel efficiency, and any applicable temperature or conversion-loss adjustments. Solar energy generated over a simulation interval equals the average electrical power generated multiplied by the elapsed time. The resulting energy is made available to the system's electrical power bus. The model must account for the distinction between instantaneous power, measured in kilowatts, and accumulated energy, measured in kilowatt-hours. This distinction is necessary for correctly determining whether the system can operate its condenser continuously or only during periods of sufficient sunlight.
+
+ 3\. Electrical power management and battery control. The power-management subsystem distributes available electricity among the condenser, fans, pumps, treatment equipment, control electronics, and other active loads. The battery stores surplus energy and supplies power when solar generation is insufficient, subject to its permitted charging and discharging limits. The battery's new stored energy equals its previous stored energy plus charging energy multiplied by charging efficiency, minus discharged energy divided by discharge efficiency. The battery state of charge equals stored energy divided by usable battery capacity, multiplied by one hundred. The CA must account for electrical conversion losses, charging limits, startup surges, and minimum reserve requirements. If available power becomes insufficient, the controller must prioritize essential functions, reduce nonessential loads, or shut down the condenser safely.
+
+ 4\. Air intake, filtration, and airflow regulation. Once the system has sufficient power and passes its startup checks, fans draw atmospheric air through the intake and filtration assembly. The system calculates or measures airflow and determines the quantity of dry air processed during each simulation interval. Filters remove the contaminants they are designed to capture, while pressure drop across the filters and heat exchanger can affect airflow and fan energy consumption. The CA monitors whether airflow is within the condenser's operating range. If airflow becomes restricted, a fan fails, or environmental conditions change, the controller adjusts expected production and power consumption accordingly. Airflow is a critical input because the condenser cannot collect moisture from air that does not pass through its heat exchanger.
+
+ 5\. Refrigeration, cooling, and heat exchange. The condenser cools incoming air so that water vapor can condense into liquid water. The precise cooling process depends on the selected equipment architecture. For a conventional compressor-based system, the refrigeration circuit includes an evaporator, compressor, condenser, expansion device, and refrigerant circulation. The heat exchanger removes sensible heat as the air cools and latent heat as water vapor condenses. The total cooling requirement equals the sensible cooling load plus the latent heat removed during condensation and any other modeled thermal loads. The coefficient of performance, or COP, equals useful cooling delivered divided by electrical energy consumed. The CA must consider available cooling capacity, heat rejection, heat-exchanger effectiveness, thermal inertia, and compressor operating limits. Condensation becomes possible when the cooling surface is sufficiently below the incoming air's dew point and the other physical conditions support moisture removal.
+
+ 6\. Condensation, drainage, and water production measurement. As air passes through the cooled heat exchanger, some of its water vapor becomes liquid condensate. The mass of water condensed equals the mass of dry air processed multiplied by the difference between the incoming and outgoing humidity ratios, provided that the difference is positive and the calculation respects the available cooling capacity. The water-production rate in liters per hour equals the mass of condensed water per hour divided by the density of liquid water. The model must account for collection inefficiency, drainage losses, equipment downtime, and environmental limitations. A water-production meter then records the calculated quantity of condensate. The CA must distinguish theoretical production from actual production so that switching on the condenser does not automatically generate water without the necessary airflow, moisture, cooling, and energy.
+
+ 7\. Water treatment and quality verification. The collected condensate enters a treatment stage designed for the intended use of the water. Depending on the system design, treatment may include filtration, disinfection, and mineral adjustment. The quantity of usable water equals collected condensate minus treatment losses and rejected water. The water-quality control module evaluates the modeled treatment process and determines whether the water meets the specified acceptance criteria. Water that fails verification must be isolated, rejected, or routed for additional treatment rather than being added to the usable-water inventory. If the intended output is potable water, the actual design must address relevant microbial and chemical hazards and comply with applicable water-quality requirements. Condensation alone does not establish that water is safe to drink.
+
+ 8\. Water storage and tank-level management. Approved water flows into the storage tank, where the CA maintains a running water balance. The new tank volume equals the previous tank volume plus usable water added, minus water dispensed and other modeled losses. Tank volume must never fall below zero or exceed the tank's physical capacity. Tank fill percentage equals current stored volume divided by tank capacity, multiplied by one hundred. The CA uses these values to regulate incoming water, prevent overflow, and determine whether additional production should continue. The 3D tank animation must be driven directly by the calculated stored volume, so the visible water level increases during production and decreases during dispensing. If the tank is full, the controller must stop or redirect incoming water according to the system design.
+
+ 9\. Consumer demand, dispensing, and purchase validation. When a consumer requests water, the demand-management module checks whether sufficient treated water is available and whether dispensing is permitted. A valid purchase results in the delivery of the requested quantity, a corresponding reduction in tank volume, and the creation of a transaction record. The transaction must be processed exactly once to prevent duplicate deductions or duplicate revenue. Revenue from a purchase equals the volume of water sold multiplied by the selling price per liter. If the requested quantity exceeds the available usable water, the system must reject the purchase or fulfill only the quantity permitted by its defined sales policy. Water production and water sales must remain separate processes: producing water does not automatically mean that a consumer has purchased it.
+
+ 10\. Revenue, operating expenses, and financial accounting. After a completed purchase, the financial module updates hourly revenue and cumulative revenue. Hourly revenue equals the sum of the revenue from all completed transactions during the current accounting hour. Cumulative revenue equals the previous cumulative revenue plus revenue from each newly completed sale. If the application calculates profitability, it must also account for modeled operating expenses, including electricity, maintenance, consumables, and treatment costs. Net operating income equals sales revenue minus the applicable operating expenses. The CA must preserve transaction records and use consistent accounting intervals so that revenue does not increase merely because the simulation advances through another time step. If no valid purchase occurs, income must remain unchanged.
+
+ 11\. Supervisory cellular automaton and fault management. The supervisory CA coordinates environmental monitoring, power allocation, condenser operation, water treatment, tank management, and consumer transactions. During each simulation step, it evaluates sensor readings, component operating states, energy availability, water inventory, and fault conditions. It then determines whether to start, continue, reduce, or stop each process. The controller must handle insufficient power, low battery charge, restricted airflow, cooling failure, a full tank, treatment failure, sensor faults, and equipment shutdown. Safety and water-quality restrictions take priority over production and sales objectives. The CA should use appropriate state transitions, operating thresholds, and hysteresis to avoid rapid switching between operating states when readings fluctuate near a threshold. Faults must be logged, and recovery should occur only when the required conditions have been restored.
+
+ 12\. Energy and water conservation checks. Throughout the pipeline, the simulation must enforce energy and material balances. The electrical balance must account for energy generated, energy supplied by the battery, equipment consumption, energy stored, and conversion losses. The water balance must account for initial inventory, produced water, other inflows, dispensed water, treatment losses, rejected water, and final inventory. These checks help identify calculation errors, repeated production updates, duplicated transactions, and inconsistent simulation timing. Each process must use consistent units and a defined time interval. Power is measured in kilowatts, energy in kilowatt-hours, water volume in liters, water-production rate in liters per hour, and revenue in the application's selected currency.
+
+ 13\. Three-dimensional visualization and dashboard updates. The final stage of every simulation step updates the 3D scene and the dashboard from the same validated system state. The solar array displays generated power; the battery displays its actual state of charge; the power meter displays instantaneous consumption and accumulated energy use; the condenser displays airflow and cooling status; the condensate collector shows water accumulating at the calculated production rate; the treatment unit displays its operating and verification status; the storage tank fills or empties according to its actual water balance; and the dispenser animates only when a valid dispensing event occurs. Water production, battery charge, power consumption, tank volume, hourly revenue, and cumulative revenue must all reflect the same underlying state. The visual layer must not create water, energy, or financial transactions independently of the simulation model.
+
+ 14\. Continuous simulation and feedback. After all calculations and component updates are complete, the CA advances the simulation to the next time step. It reevaluates environmental conditions, recalculates solar power and battery availability, updates condenser performance, calculates additional water production, verifies treatment status, updates storage, and processes any new consumer purchases. This cycle continues until the simulation is paused, the system is shut down, or a fault requires intervention. The resulting pipeline represents a continuous feedback-controlled system rather than a one-way sequence of animations.
+
+ The complete process therefore follows this operational order: environmental assessment, solar generation, power management, air intake, airflow regulation, refrigeration and heat exchange, condensation, water treatment, quality verification, storage, consumer dispensing, financial accounting, CA supervision, conservation checks, and 3D visualization. The architecture provides a comprehensive basis for implementing the iOS simulation. However, demonstrating that the physical system can achieve a target of 3,000 liters of water per day requires equipment-specific performance data and validation under the intended environmental conditions.
+ */
 import SwiftUI
 import SceneKit
 import UIKit
@@ -33,6 +67,8 @@ struct CAParameters {
     var condenserPowerKW: Double = 20.0
     var tankCapacityL: Double = 3000.0
     var consumerDemandLPerHour: Double = 50.0
+    
+    var waterPricePerLiter: Double = 0.05
 }
 
 // MARK: - Simulation State
@@ -64,6 +100,8 @@ struct CAState {
     var cumulativeSolarEnergyKWh: Double = 0.0
     var cumulativeBatteryDischargeKWh: Double = 0.0
     var cumulativeBatteryChargeKWh: Double = 0.0
+    var hourlyIncome : Double = 0.0
+    var cumulativeIncome : Double = 0.0
 }
 
 // MARK: - Environment Profile
@@ -441,6 +479,8 @@ struct AtmosphericWaterSimulator {
             state.batteryDischargeKWh
         state.cumulativeBatteryChargeKWh +=
             state.batteryChargeKWh
+        
+        processConsumerPurchase(liters: state.waterSoldL)
 
         return HourlySimulationRecord(
             generation: state.generation,
@@ -473,6 +513,11 @@ struct AtmosphericWaterSimulator {
         state.tankLiters -= sold
         state.waterSoldL = sold
         state.cumulativeWaterSoldL += sold
+        
+        state.hourlyIncome =
+            state.waterSoldL * parameters.waterPricePerLiter
+
+        state.cumulativeIncome += state.hourlyIncome
 
         return sold
     }
@@ -574,6 +619,8 @@ struct ContentView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 18))
 
                     playbackControls
+                    
+                    incomeSection
 
                     condenserStatusCard
 
@@ -981,12 +1028,127 @@ struct ContentView: View {
             .foregroundStyle(.secondary)
         }
     }
+    private var averageIncomePerDay: Double {
+        guard state.hour > 0 else {
+            return 0.0
+        }
 
-    // MARK: Cumulative Totals
+        let simulatedDays = Double(state.hour) / 24.0
+
+        return state.cumulativeIncome / simulatedDays
+    }
+    // MARK: Income Panel
+
+    private var incomeSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionTitle("Water Sales & Income", symbol: "dollarsign.circle")
+
+            HStack(spacing: 10) {
+                valueCard(
+                    title: "Income This Hour",
+                    value: String(
+                        format: "$%.2f",
+                        state.hourlyIncome
+                    ),
+                    symbol: "dollarsign.circle.fill"
+                )
+
+                valueCard(
+                    title: "Total Income",
+                    value: String(
+                        format: "$%.2f",
+                        state.cumulativeIncome
+                    ),
+                    symbol: "chart.line.uptrend.xyaxis"
+                )
+            }
+            
+            HStack(spacing: 10) {
+                valueCard(
+                    title: "Average Income per Day",
+                    value: String(
+                        format: "$%.2f",
+                        averageIncomePerDay
+                    ),
+                    symbol: "calendar"
+                )
+
+                valueCard(
+                    title: "Simulated Days",
+                    value: String(
+                        format: "%.2f days",
+                        Double(state.generation) / 24.0
+                    ),
+                    symbol: "clock"
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Selling Price")
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    Text(
+                        String(
+                            format: "$%.2f / L",
+                            parameters.waterPricePerLiter
+                        )
+                    )
+                    .font(.headline.monospacedDigit())
+                }
+
+                Slider(
+                    value: Binding(
+                        get: {
+                            model.simulator.parameters.waterPricePerLiter
+                        },
+                        set: { newValue in
+                            model.simulator.parameters.waterPricePerLiter =
+                                newValue
+                        }
+                    ),
+                    in: 0.01...1.00,
+                    step: 0.01
+                )
+                .tint(.green)
+
+                HStack {
+                    Text("$0.01 / L")
+                    Spacer()
+                    Text("$1.00 / L")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
+            totalRow(
+                "Revenue per 1,000 L",
+                value: String(
+                    format: "$%.2f",
+                    parameters.waterPricePerLiter * 1000
+                )
+            )
+
+            totalRow(
+                "Water Sold",
+                value: String(
+                    format: "%.1f L",
+                    state.cumulativeWaterSoldL
+                )
+            )
+        }
+        .padding()
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
 
     private var cumulativeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Cumulative Totals", symbol: "chart.bar")
+            
 
             totalRow(
                 "Total Water Produced",
